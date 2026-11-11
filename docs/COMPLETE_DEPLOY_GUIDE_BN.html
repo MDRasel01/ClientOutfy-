@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+<title>LeadOutfy — Vercel Deploy Complete Guide</title>
+<style>
+:root {
+  --bg: #0a0612;
+  --bg2: #120d1f;
+  --card: #16102a;
+  --border: #2a2045;
+  --accent: #7c3aed;
+  --accent2: #a855f7;
+  --accent3: #c084fc;
+  --green: #22c55e;
+  --yellow: #eab308;
+  --red: #ef4444;
+  --orange: #f97316;
+  --blue: #3b82f6;
+  --text: #f0eaff;
+  --text2: #a89bc4;
+  --text3: #6b5f8a;
+  box-sizing: border-box;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+*, *::before, *::after { box-sizing: inherit; margin: 0; padding: 0; }
+html, body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; line-height: 1.7; }
+body { max-width: 900px; margin: 0 auto; padding: 32px 20px; }
+
+h1 { font-size: 28px; font-weight: 800; background: linear-gradient(135deg, var(--accent2), var(--accent3)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 6px; }
+.subtitle { color: var(--text2); font-size: 15px; margin-bottom: 36px; }
+
+h2 { font-size: 19px; font-weight: 700; color: var(--accent3); margin: 36px 0 14px; display: flex; align-items: center; gap: 10px; }
+h2 .num { background: var(--accent); color: #fff; border-radius: 50%; width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; flex-shrink: 0; }
+h3 { font-size: 15px; font-weight: 700; color: var(--accent2); margin: 20px 0 8px; }
+
+p { color: var(--text2); font-size: 14px; margin-bottom: 10px; }
+li { color: var(--text2); font-size: 14px; margin-bottom: 6px; margin-left: 18px; }
+
+.card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 20px 22px; margin-bottom: 16px; }
+.card.green { border-left: 4px solid var(--green); }
+.card.orange { border-left: 4px solid var(--orange); }
+.card.red { border-left: 4px solid var(--red); }
+.card.blue { border-left: 4px solid var(--blue); }
+.card.purple { border-left: 4px solid var(--accent); }
+
+.code-block { background: #0d0820; border: 1px solid #2a2045; border-radius: 10px; padding: 16px; font-family: 'JetBrains Mono', 'Courier New', monospace; font-size: 13px; color: #c084fc; overflow-x: auto; margin: 10px 0 16px; white-space: pre; }
+.code-block .key { color: #34d399; }
+.code-block .val { color: #fbbf24; }
+.code-block .comment { color: #6b5f8a; }
+
+.step { display: flex; gap: 14px; margin-bottom: 18px; }
+.step-num { background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; border-radius: 8px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; flex-shrink: 0; margin-top: 2px; }
+.step-content { flex: 1; }
+.step-title { font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+.step-desc { font-size: 13px; color: var(--text2); }
+
+.badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+.badge.important { background: #7f1d1d; color: var(--red); }
+.badge.tip { background: #14532d; color: var(--green); }
+.badge.warning { background: #713f12; color: var(--yellow); }
+.badge.info { background: #1e3a5f; color: var(--blue); }
+
+.env-table { width: 100%; border-collapse: collapse; margin: 12px 0; }
+.env-table th { background: #1a1230; color: var(--text3); font-size: 12px; font-weight: 700; text-transform: uppercase; padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border); }
+.env-table td { padding: 11px 14px; font-size: 13px; border-bottom: 1px solid var(--border); vertical-align: top; }
+.env-table tr:last-child td { border-bottom: none; }
+.env-table .var-name { font-family: monospace; color: var(--accent3); font-weight: 600; }
+.env-table .var-desc { color: var(--text2); }
+.env-table .var-where { color: var(--green); font-size: 12px; }
+
+.highlight { background: #1a1230; border: 1px solid var(--accent); border-radius: 8px; padding: 14px 16px; margin: 12px 0; }
+.highlight .label { color: var(--accent3); font-size: 12px; font-weight: 700; text-transform: uppercase; margin-bottom: 6px; }
+.highlight .val { font-family: monospace; color: var(--yellow); font-size: 13px; word-break: break-all; }
+
+.divider { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
+
+.toc { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 20px 22px; margin-bottom: 36px; }
+.toc-title { font-size: 14px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 12px; }
+.toc a { display: block; color: var(--text2); font-size: 14px; padding: 4px 0; text-decoration: none; }
+.toc a:hover { color: var(--accent3); }
+.toc a .toc-num { color: var(--accent); font-weight: 700; margin-right: 8px; }
+
+.arch-box { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin: 16px 0; }
+.arch-item { background: #1a1230; border: 1px solid var(--border); border-radius: 10px; padding: 14px; text-align: center; }
+.arch-icon { font-size: 28px; margin-bottom: 8px; }
+.arch-name { font-size: 13px; font-weight: 700; color: var(--text); }
+.arch-desc { font-size: 11px; color: var(--text3); margin-top: 4px; }
+.arch-arrow { display: flex; align-items: center; justify-content: center; color: var(--accent2); font-size: 22px; }
+</style>
+</head>
+<body>
+
+<h1>⚡ LeadOutfy — Complete Deploy Guide</h1>
+<p class="subtitle">Dashboard GitHub → Vercel Deploy + Supabase Setup | A to Z বাংলা গাইড</p>
+
+<div class="toc">
+  <div class="toc-title">📋 সূচিপত্র</div>
+  <a href="#arch"><span class="toc-num">00</span>System Architecture — কোনটা কোথায় কাজ করে</a>
+  <a href="#supabase"><span class="toc-num">01</span>Supabase Setup — SQL Run করো</a>
+  <a href="#github"><span class="toc-num">02</span>GitHub — Dashboard Upload করো</a>
+  <a href="#vercel"><span class="toc-num">03</span>Vercel — Deploy করো</a>
+  <a href="#envvars"><span class="toc-num">04</span>Environment Variables — কোনটা কোথায় দিবে</a>
+  <a href="#admin"><span class="toc-num">05</span>Admin Account — First Login Setup</a>
+  <a href="#extension"><span class="toc-num">06</span>Extension — Dashboard URL কানেক্ট</a>
+  <a href="#checklist"><span class="toc-num">07</span>Final Checklist</a>
+  <a href="#troubleshoot"><span class="toc-num">08</span>Common Problems & Fix</a>
+</div>
+
+<!-- ═══════════════════════════ ARCHITECTURE ═══════════════════════════ -->
+<h2 id="arch"><span class="num">0</span>System Architecture — কোনটা কোথায়</h2>
+<p>তোমার LeadOutfy সিস্টেমে <strong>৩টা আলাদা Part</strong> আছে। আগে বোঝো কোনটা কী:</p>
+
+<div class="arch-box">
+  <div class="arch-item">
+    <div class="arch-icon">🧩</div>
+    <div class="arch-name">Chrome Extension</div>
+    <div class="arch-desc">User browser-এ চলে। Lead scrape, Gmail/WA send করে। ইতিমধ্যেই তোমার কাছে আছে।</div>
+  </div>
+  <div class="arch-item">
+    <div class="arch-icon">📊</div>
+    <div class="arch-name">Admin Dashboard</div>
+    <div class="arch-desc">leadoutfy-dashboard-main.zip — এটাই Vercel-এ deploy করতে হবে। License manage, payment, stats সব এখানে।</div>
+  </div>
+  <div class="arch-item">
+    <div class="arch-icon">🗄️</div>
+    <div class="arch-name">Supabase Database</div>
+    <div class="arch-desc">তোমার সব data এখানে। License, payment, email events সব Supabase-এ store হয়।</div>
+  </div>
+</div>
+
+<div class="card blue">
+  <strong>🔑 Key Point:</strong> তোমার Dashboard ইতিমধ্যে Supabase URL &amp; Key hardcode করা আছে — মানে Supabase URL/Key <em>Vercel এ দিতে হবে না</em>, শুধু Supabase-এ SQL run করতে হবে।
+</div>
+
+<hr class="divider"/>
+
+<!-- ═══════════════════════════ SUPABASE ═══════════════════════════ -->
+<h2 id="supabase"><span class="num">1</span>Supabase Setup — SQL Tables তৈরি করো</h2>
+<p>তোমার Supabase project: <code style="color:#fbbf24">jzhbltazfbasfwkjcffr.supabase.co</code></p>
+
+<div class="step">
+  <div class="step-num">1</div>
+  <div class="step-content">
+    <div class="step-title">Supabase Dashboard খোলো</div>
+    <div class="step-desc">Browser-এ যাও: <strong>supabase.com</strong> → Login → তোমার project select করো</div>
+  </div>
+</div>
+
+<div class="step">
+  <div class="step-num">2</div>
+  <div class="step-content">
+    <div class="step-title">SQL Editor খোলো</div>
+    <div class="step-desc">Left sidebar-এ <strong>"SQL Editor"</strong> click করো (বা top menu থেকে)</div>
+  </div>
+</div>
+
+<div class="step">
+  <div class="step-num">3</div>
+  <div class="step-content">
+    <div class="step-title">নিচের SQL গুলো Order অনুযায়ী Run করো</div>
+    <div class="step-desc">প্রতিটা block আলাদাভাবে paste করে <strong>Run</strong> চাপো:</div>
+  </div>
+</div>
+
+<h3>📌 SQL Block 1 — Email Tracking Table (সবার আগে এটা)</h3>
+<div class="code-block">-- Email Events table + indexes + RLS
+create table if not exists public.email_events (
+  id              uuid        primary key default gen_random_uuid(),
+  tracking_id     text        unique not null,
+  license_key     text        not null,
+  recipient       text,
+  channel         text,
+  subject         text,
+  status          text        default 'sent',
+  error           text,
+  opened          boolean     default false,
+  open_count      int         default 0,
+  replied         boolean     default false,
+  sent_at         timestamptz default now(),
+  first_opened_at timestamptz,
+  last_opened_at  timestamptz,
+  replied_at      timestamptz
+);
+
+create index if not exists email_events_license_idx  on public.email_events (license_key);
+create index if not exists email_events_tracking_idx on public.email_events (tracking_id);
+
+alter table public.email_events enable row level security;</div>
+
+<h3>📌 SQL Block 2 — Licenses Table</h3>
+<div class="code-block">-- Licenses table
+create table if not exists public.licenses (
+  id              uuid        primary key default gen_random_uuid(),
+  license_key     text        unique not null,
+  customer_name   text,
+  customer_phone  text,
+  customer_email  text,
+  plan_id         text,
+  plan_name       text,
+  credits         int         default 0,
+  status          text        default 'active',
+  activated_at    timestamptz default now(),
+  expires_at      timestamptz,
+  created_at      timestamptz default now()
+);
+
+alter table public.licenses enable row level security;</div>
+
+<h3>📌 SQL Block 3 — Payments Table</h3>
+<div class="code-block">-- Payments table
+create table if not exists public.payments (
+  id              uuid        primary key default gen_random_uuid(),
+  customer_name   text,
+  customer_phone  text,
+  plan_id         text,
+  plan_name       text,
+  amount          numeric,
+  tx_id           text,
+  method          text,
+  status          text        default 'pending',
+  license_key     text,
+  credits         int         default 0,
+  note            text,
+  created_at      timestamptz default now(),
+  confirmed_at    timestamptz
+);</div>
+
+<h3>📌 SQL Block 4 — Plans Table</h3>
+<div class="code-block">-- Plans table
+create table if not exists public.plans (
+  id          text    primary key,
+  name        text    not null,
+  credits     int     default 0,
+  price       numeric default 0,
+  duration    int     default 30,
+  is_active   boolean default true,
+  sort_order  int     default 0,
+  created_at  timestamptz default now()
+);
+
+-- Default plans insert (customize price as needed)
+insert into public.plans (id, name, credits, price, duration, sort_order) values
+  ('starter',  'Starter Plan',    500,   299,  30, 1),
+  ('pro',      'Pro Plan',       2000,   799,  30, 2),
+  ('business', 'Business Plan',  5000,  1499,  30, 3),
+  ('lifetime', 'Lifetime Plan', 99999, 4999, 3650, 4)
+on conflict (id) do nothing;</div>
+
+<h3>📌 SQL Block 5 — Admins Table</h3>
+<div class="code-block">-- Admin table
+create table if not exists public.admins (
+  id            uuid  primary key default gen_random_uuid(),
+  username      text  unique not null,
+  password_hash text  not null,
+  created_at    timestamptz default now()
+);
+
+-- Default admin insert (password: admin123 — পরে dashboard থেকে change করো)
+insert into public.admins (username, password_hash) values
+  ('admin', 'admin123')
+on conflict (username) do nothing;</div>
+
+<h3>📌 SQL Block 6 — Settings Table</h3>
+<div class="code-block">-- Settings table
+create table if not exists public.settings (
+  key   text primary key,
+  value text
+);
+
+insert into public.settings (key, value) values
+  ('bkash_number',   '01XXXXXXXXX'),
+  ('nagad_number',   '01XXXXXXXXX'),
+  ('rocket_number',  '01XXXXXXXXX'),
+  ('support_wa',     '01XXXXXXXXX'),
+  ('brand_name',     'LeadOutfy Ai Pro')
+on conflict (key) do nothing;</div>
+
+<h3>📌 SQL Block 7 — Functions (PDF থেকে)</h3>
+<div class="code-block">-- track_open function (with 12s prefetch filter)
+create or replace function public.track_open(p_tracking_id text)
+returns void language plpgsql security definer as $$
+begin
+  update public.email_events
+  set opened          = true,
+      open_count      = open_count + 1,
+      first_opened_at = coalesce(first_opened_at, now()),
+      last_opened_at  = now()
+  where tracking_id = p_tracking_id
+    and now() - sent_at > interval '12 seconds';
+end;
+$$;</div>
+
+<div class="code-block">-- email_stats function
+create or replace function public.email_stats(p_license_key text)
+returns json language sql security definer as $$
+  select json_build_object(
+    'total',   count(*),
+    'sent',    count(*) filter (where status = 'sent'),
+    'failed',  count(*) filter (where status = 'failed'),
+    'opened',  count(*) filter (where opened = true),
+    'replied', count(*) filter (where replied = true)
+  )
+  from public.email_events
+  where license_key = p_license_key;
+$$;</div>
+
+<div class="code-block">-- email_stats_buckets (today/yesterday/week/month/all)
+create or replace function public.email_stats_buckets(p_license_key text)
+returns json language sql security definer as $$
+with e as (
+  select status, opened, replied, sent_at,
+         (sent_at at time zone 'Asia/Dhaka')::date as d
+  from public.email_events where license_key = p_license_key
+),
+cur as ( select (now() at time zone 'Asia/Dhaka')::date as today )
+select json_build_object(
+  'today', (select json_build_object('total',count(*),'sent',count(*) filter(where status='sent'),
+    'failed',count(*) filter(where status='failed'),'opened',count(*) filter(where opened),
+    'replied',count(*) filter(where replied)) from e,cur where e.d=cur.today),
+  'yesterday', (select json_build_object('total',count(*),'sent',count(*) filter(where status='sent'),
+    'failed',count(*) filter(where status='failed'),'opened',count(*) filter(where opened),
+    'replied',count(*) filter(where replied)) from e,cur where e.d=cur.today-1),
+  'week', (select json_build_object('total',count(*),'sent',count(*) filter(where status='sent'),
+    'failed',count(*) filter(where status='failed'),'opened',count(*) filter(where opened),
+    'replied',count(*) filter(where replied)) from e where sent_at>=now()-interval '7 days'),
+  'month', (select json_build_object('total',count(*),'sent',count(*) filter(where status='sent'),
+    'failed',count(*) filter(where status='failed'),'opened',count(*) filter(where opened),
+    'replied',count(*) filter(where replied)) from e where sent_at>=now()-interval '30 days'),
+  'all', (select json_build_object('total',count(*),'sent',count(*) filter(where status='sent'),
+    'failed',count(*) filter(where status='failed'),'opened',count(*) filter(where opened),
+    'replied',count(*) filter(where replied)) from e)
+);
+$$;</div>
+
+<div class="card green">
+  <span class="badge tip">✅ Done</span> সব SQL run হয়ে গেলে Supabase-এর <strong>Table Editor</strong> গিয়ে দেখো — email_events, licenses, payments, plans, admins, settings — এই ৬টা table দেখা যাবে।
+</div>
+
+<hr class="divider"/>
+
+<!-- ═══════════════════════════ GITHUB ═══════════════════════════ -->
+<h2 id="github"><span class="num">2</span>GitHub — Dashboard Upload করো</h2>
+
+<div class="step">
+  <div class="step-num">1</div>
+  <div class="step-content">
+    <div class="step-title">github.com এ Login করো</div>
+    <div class="step-desc">Account না থাকলে free signup করো।</div>
+  </div>
+</div>
+
+<div class="step">
+  <div class="step-num">2</div>
+  <div class="step-content">
+    <div class="step-title">New Repository তৈরি করো</div>
+    <div class="step-desc">Top-right "+" বাটন → <strong>New repository</strong> → Name: <code>leadoutfy-dashboard</code> → <strong>Public</strong> → "Create repository" click করো</div>
+  </div>
+</div>
+
+<div class="step">
+  <div class="step-num">3</div>
+  <div class="step-content">
+    <div class="step-title">ZIP extract করে files upload করো</div>
+    <div class="step-desc">
+      তোমার <code>leadoutfy-dashboard-main.zip</code> extract করো। ভেতরে এই ৩টা file পাবে:<br/>
+      • <strong>index.html</strong><br/>
+      • <strong>manifest.json</strong><br/>
+      • <strong>vercel.json</strong><br/><br/>
+      GitHub repository page-এ <strong>"uploading an existing file"</strong> link click করো → এই ৩টা file drag করে upload করো → <strong>"Commit changes"</strong> click করো।
+    </div>
+  </div>
+</div>
+
+<div class="card orange">
+  <span class="badge warning">⚠️ Important</span> ZIP file-টা directly upload করবে না। Extract করে ভেতরের ৩টা file আলাদাভাবে upload করো।
+</div>
+
+<hr class="divider"/>
+
+<!-- ═══════════════════════════ VERCEL ═══════════════════════════ -->
+<h2 id="vercel"><span class="num">3</span>Vercel — Deploy করো</h2>
+
+<div class="step">
+  <div class="step-num">1</div>
+  <div class="step-content">
+    <div class="step-title">vercel.com এ যাও</div>
+    <div class="step-desc"><strong>GitHub দিয়ে Sign Up/Login</strong> করো (same GitHub account যেটায় dashboard upload করেছো)</div>
+  </div>
+</div>
+
+<div class="step">
+  <div class="step-num">2</div>
+  <div class="step-content">
+    <div class="step-title">New Project তৈরি করো</div>
+    <div class="step-desc">Dashboard-এ <strong>"Add New → Project"</strong> → <strong>"Import Git Repository"</strong> → তোমার <code>leadoutfy-dashboard</code> repo select করো → <strong>"Import"</strong> click করো</div>
+  </div>
+</div>
+
+<div class="step">
+  <div class="step-num">3</div>
+  <div class="step-content">
+    <div class="step-title">Configure Project</div>
+    <div class="step-desc">
+      • <strong>Framework Preset:</strong> "Other" select করো<br/>
+      • <strong>Root Directory:</strong> <code>./</code> (default)<br/>
+      • <strong>Build Command:</strong> খালি রাখো<br/>
+      • <strong>Output Directory:</strong> <code>./</code><br/>
+      Environment Variables section এখন skip করো (পরের step-এ করবো)<br/>
+      → <strong>"Deploy"</strong> click করো
+    </div>
+  </div>
+</div>
+
+<div class="step">
+  <div class="step-num">4</div>
+  <div class="step-content">
+    <div class="step-title">Deploy Complete হওয়ার পর URL নাও</div>
+    <div class="step-desc">Deploy সফল হলে Vercel তোমাকে একটা URL দেবে যেমন: <code style="color:#fbbf24">https://leadoutfy-dashboard.vercel.app</code> — এটাই তোমার Dashboard URL!</div>
+  </div>
+</div>
+
+<div class="card green">
+  <span class="badge tip">✅ Simple!</span> তোমার <code>vercel.json</code> ইতিমধ্যে configured আছে static deploy-এর জন্য। তাই কোনো build setup লাগবে না।
+</div>
+
+<hr class="divider"/>
+
+<!-- ═══════════════════════════ ENV VARS ═══════════════════════════ -->
+<h2 id="envvars"><span class="num">4</span>Environment Variables — কোনটা কোথায় দিবে</h2>
+
+<div class="card blue">
+  <strong>📌 তোমার Dashboard-এর বিশেষ বৈশিষ্ট্য:</strong> তোমার <code>index.html</code>-এ Supabase URL এবং Anon Key <em>hardcode</em> করা আছে। মানে Vercel-এ Supabase-এর জন্য কোনো Environment Variable দিতে হবে না। Dashboard directly কাজ করবে।
+</div>
+
+<h3>তোমার Hardcoded Values (ইতিমধ্যে আছে):</h3>
+<div class="highlight">
+  <div class="label">Supabase URL (index.html line 403)</div>
+  <div class="val">https://jzhbltazfbasfwkjcffr.supabase.co</div>
+</div>
+<div class="highlight">
+  <div class="label">Supabase Anon Key (index.html line 404)</div>
+  <div class="val">eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp6aGJsdGF6ZmJhc2Z3a2pjZmZyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU3OTYwMDksImV4cCI6MjA5MTM3MjAwOX0.7L7SWN8jLjhRprqDXVvF8F-BhtdfffNuRKNCzSSDtA4</div>
+</div>
+
+<div class="card orange">
+  <span class="badge warning">⚠️ Security Note</span> Anon Key public হওয়া ঠিক আছে — এটা design-ই এরকম। কিন্তু <strong>Service Role Key কখনো frontend-এ রাখবে না</strong>। তোমার dashboard শুধু anon key ব্যবহার করে, যা safe।
+</div>
+
+<h3>🔑 Supabase-এ কোন Keys কোথায় পাবে:</h3>
+<table class="env-table">
+  <thead>
+    <tr>
+      <th>Key নাম</th>
+      <th>কোথায় পাবে</th>
+      <th>কোথায় ব্যবহার হয়</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td class="var-name">anon (public) key</td>
+      <td class="var-desc">Supabase → Project Settings → API → Project API Keys → "anon public"</td>
+      <td class="var-where">Dashboard (hardcoded), Extension</td>
+    </tr>
+    <tr>
+      <td class="var-name">service_role key</td>
+      <td class="var-desc">Supabase → Project Settings → API → Project API Keys → "service_role secret"</td>
+      <td class="var-where">Backend server শুধু (extension-এর Vercel backend-এ)</td>
+    </tr>
+    <tr>
+      <td class="var-name">Project URL</td>
+      <td class="var-desc">Supabase → Project Settings → API → "Project URL"</td>
+      <td class="var-where">সব জায়গায়</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>Extension Backend (lead-outfy-backend-vercel) এর জন্য যদি কোনো Vercel project থাকে:</h3>
+<p>Extension-এর <code>background.js</code>-এ একটা আলাদা backend URL আছে: <code style="color:#fbbf24">lead-outfy-backend-vercel.vercel.app</code> — এই project-এ নিচের env vars দিতে হবে:</p>
+<table class="env-table">
+  <thead>
+    <tr><th>Variable Name</th><th>Value</th><th>কোথায় পাবে</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td class="var-name">SUPABASE_URL</td>
+      <td class="var-desc">https://jzhbltazfbasfwkjcffr.supabase.co</td>
+      <td class="var-where">Supabase → Settings → API</td>
+    </tr>
+    <tr>
+      <td class="var-name">SUPABASE_SERVICE_KEY</td>
+      <td class="var-desc">eyJ... (service_role key)</td>
+      <td class="var-where">Supabase → Settings → API → service_role</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>Vercel-এ Environment Variables কীভাবে দেবে:</strong></p>
+<div class="step">
+  <div class="step-num">→</div>
+  <div class="step-content">
+    <div class="step-desc">Vercel Dashboard → তোমার Project → <strong>Settings</strong> tab → <strong>Environment Variables</strong> → "Add New" → Key ও Value দাও → <strong>Save</strong></div>
+  </div>
+</div>
+
+<hr class="divider"/>
+
+<!-- ═══════════════════════════ ADMIN ═══════════════════════════ -->
+<h2 id="admin"><span class="num">5</span>Admin Account — First Login</h2>
+
+<div class="step">
+  <div class="step-num">1</div>
+  <div class="step-content">
+    <div class="step-title">Dashboard URL খোলো</div>
+    <div class="step-desc">Vercel দেওয়া URL browser-এ open করো</div>
+  </div>
+</div>
+
+<div class="step">
+  <div class="step-num">2</div>
+  <div class="step-content">
+    <div class="step-title">Login করো</div>
+    <div class="step-desc">
+      • <strong>Username:</strong> <code>admin</code><br/>
+      • <strong>Password:</strong> <code>admin123</code><br/>
+      (SQL Block 5-এ যা insert করেছিলে)
+    </div>
+  </div>
+</div>
+
+<div class="step">
+  <div class="step-num">3</div>
+  <div class="step-content">
+    <div class="step-title">সাথে সাথে Password Change করো!</div>
+    <div class="step-desc">Dashboard → Settings page → "Admin Password" section → নতুন password দাও → Save করো</div>
+  </div>
+</div>
+
+<div class="step">
+  <div class="step-num">4</div>
+  <div class="step-content">
+    <div class="step-title">Payment Numbers Setup করো</div>
+    <div class="step-desc">Settings page-এ তোমার bKash/Nagad/Rocket নম্বর দাও যেন customers payment করতে পারে।</div>
+  </div>
+</div>
+
+<div class="card red">
+  <span class="badge important">🚨 Critical</span> Default password <code>admin123</code> দিয়ে deploy করলে যে কেউ তোমার dashboard access করতে পারবে! Deploy-এর পরপরই password change করো।
+</div>
+
+<hr class="divider"/>
+
+<!-- ═══════════════════════════ EXTENSION ═══════════════════════════ -->
+<h2 id="extension"><span class="num">6</span>Extension — কী কানেক্ট করে</h2>
+
+<p>তোমার Extension-এ ইতিমধ্যে সব URL configured আছে:</p>
+
+<table class="env-table">
+  <thead>
+    <tr><th>Service</th><th>URL</th><th>কাজ</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td class="var-name">Vercel Backend</td>
+      <td class="var-desc">lead-outfy-backend-vercel.vercel.app</td>
+      <td class="var-where">License verify, credit deduct</td>
+    </tr>
+    <tr>
+      <td class="var-name">Email Server</td>
+      <td class="var-desc">lead-outfy-new-email-server.vercel.app</td>
+      <td class="var-where">Custom email send</td>
+    </tr>
+    <tr>
+      <td class="var-name">WA Server</td>
+      <td class="var-desc">leadoutfy-whatsapp-server.onrender.com</td>
+      <td class="var-where">WhatsApp send</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="card purple">
+  <strong>Extension Users কীভাবে কানেক্ট করবে?</strong><br/>
+  ১. Extension install করবে Chrome-এ<br/>
+  ২. Extension popup → Account tab → License Key দিয়ে Activate করবে<br/>
+  ৩. তুমি Dashboard থেকে License Key generate করে WhatsApp-এ পাঠাবে
+</div>
+
+<hr class="divider"/>
+
+<!-- ═══════════════════════════ CHECKLIST ═══════════════════════════ -->
+<h2 id="checklist"><span class="num">7</span>Final Checklist ✅</h2>
+
+<div class="card">
+  <div style="display:flex;flex-direction:column;gap:10px;">
+    <label style="display:flex;gap:10px;align-items:flex-start;cursor:pointer;">
+      <input type="checkbox" style="margin-top:3px;accent-color:#7c3aed;width:16px;height:16px;flex-shrink:0;"/>
+      <span style="color:var(--text2);font-size:14px;">Supabase-এ ৬টা table তৈরি হয়েছে (email_events, licenses, payments, plans, admins, settings)</span>
+    </label>
+    <label style="display:flex;gap:10px;align-items:flex-start;cursor:pointer;">
+      <input type="checkbox" style="margin-top:3px;accent-color:#7c3aed;width:16px;height:16px;flex-shrink:0;"/>
+      <span style="color:var(--text2);font-size:14px;">Supabase-এ ৩টা function create হয়েছে (track_open, email_stats, email_stats_buckets)</span>
+    </label>
+    <label style="display:flex;gap:10px;align-items:flex-start;cursor:pointer;">
+      <input type="checkbox" style="margin-top:3px;accent-color:#7c3aed;width:16px;height:16px;flex-shrink:0;"/>
+      <span style="color:var(--text2);font-size:14px;">GitHub-এ repository তৈরি হয়েছে এবং ৩টা file upload হয়েছে</span>
+    </label>
+    <label style="display:flex;gap:10px;align-items:flex-start;cursor:pointer;">
+      <input type="checkbox" style="margin-top:3px;accent-color:#7c3aed;width:16px;height:16px;flex-shrink:0;"/>
+      <span style="color:var(--text2);font-size:14px;">Vercel-এ deploy সফল হয়েছে, URL পাওয়া গেছে</span>
+    </label>
+    <label style="display:flex;gap:10px;align-items:flex-start;cursor:pointer;">
+      <input type="checkbox" style="margin-top:3px;accent-color:#7c3aed;width:16px;height:16px;flex-shrink:0;"/>
+      <span style="color:var(--text2);font-size:14px;">Dashboard URL খুলে admin/admin123 দিয়ে login হয়েছে</span>
+    </label>
+    <label style="display:flex;gap:10px;align-items:flex-start;cursor:pointer;">
+      <input type="checkbox" style="margin-top:3px;accent-color:#7c3aed;width:16px;height:16px;flex-shrink:0;"/>
+      <span style="color:var(--text2);font-size:14px;">Admin password change করা হয়েছে</span>
+    </label>
+    <label style="display:flex;gap:10px;align-items:flex-start;cursor:pointer;">
+      <input type="checkbox" style="margin-top:3px;accent-color:#7c3aed;width:16px;height:16px;flex-shrink:0;"/>
+      <span style="color:var(--text2);font-size:14px;">Payment numbers (bKash/Nagad) Settings-এ দেওয়া হয়েছে</span>
+    </label>
+    <label style="display:flex;gap:10px;align-items:flex-start;cursor:pointer;">
+      <input type="checkbox" style="margin-top:3px;accent-color:#7c3aed;width:16px;height:16px;flex-shrink:0;"/>
+      <span style="color:var(--text2);font-size:14px;">একটা test license generate করে extension-এ activate করে দেখা হয়েছে</span>
+    </label>
+  </div>
+</div>
+
+<hr class="divider"/>
+
+<!-- ═══════════════════════════ TROUBLESHOOT ═══════════════════════════ -->
+<h2 id="troubleshoot"><span class="num">8</span>Common Problems & Fix</h2>
+
+<h3>❌ Problem: "Invalid credentials" — Login হচ্ছে না</h3>
+<div class="card">
+  <p><strong>Fix:</strong> Supabase → Table Editor → admins table → দেখো row আছে কিনা। না থাকলে SQL Block 5 আবার run করো।</p>
+</div>
+
+<h3>❌ Problem: Dashboard deploy হয়েছে কিন্তু blank/white screen</h3>
+<div class="card">
+  <p><strong>Fix:</strong> Vercel → তোমার project → Deployments → latest deployment-এর logs দেখো। সমস্যাটা সেখানে লেখা থাকবে। প্রায়ই এটা হয় যদি index.html সঠিকভাবে root-এ না থাকে।</p>
+</div>
+
+<h3>❌ Problem: Data দেখাচ্ছে না / tables empty</h3>
+<div class="card">
+  <p><strong>Fix:</strong> Supabase → Table Editor → plans table-এ কিছু data insert করো। প্রথমবার plans empty থাকলে dashboard-এ কিছু দেখাবে না।</p>
+</div>
+
+<h3>❌ Problem: Extension license verify হচ্ছে না</h3>
+<div class="card">
+  <p><strong>Fix:</strong> Extension backend (<code>lead-outfy-backend-vercel.vercel.app</code>) আলাদা Vercel project। সেই project-এ <code>SUPABASE_URL</code> এবং <code>SUPABASE_SERVICE_KEY</code> environment variable দেওয়া আছে কিনা check করো।</p>
+</div>
+
+<h3>❌ Problem: Vercel deploy-এ "Build Failed"</h3>
+<div class="card">
+  <p><strong>Fix:</strong> Framework Preset → <strong>"Other"</strong> select করো। Build Command খালি রাখো। তোমার project static HTML — কোনো build লাগে না।</p>
+</div>
+
+<hr class="divider"/>
+<div class="card green" style="text-align:center;padding:28px;">
+  <div style="font-size:32px;margin-bottom:10px;">🎉</div>
+  <div style="font-size:18px;font-weight:700;color:var(--text);margin-bottom:8px;">সব কিছু হয়ে গেলে তোমার LeadOutfy Ready!</div>
+  <div style="color:var(--text2);font-size:14px;">Dashboard URL share করো customers দের, তারা payment করবে, তুমি confirm করবে, license দেবে — ব্যস!</div>
+</div>
+
+</body>
+</html>
