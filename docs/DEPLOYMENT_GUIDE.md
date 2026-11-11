@@ -103,3 +103,4 @@ This guide provides end-to-end instructions for deploying all components of the 
 5. Pin the **ClientOutfy Ai Pro** extension in Chrome.
 6. Open the extension, navigate to the **Account** tab, paste a license key generated from your Admin Dashboard, and click **Activate**.
 7. Start harvesting leads from Google Maps!
+

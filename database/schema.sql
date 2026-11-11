@@ -127,3 +127,4 @@ create policy "Allow anon select settings" on public.settings for select using (
 create policy "Allow anon update settings" on public.settings for update using (true);
 
 create policy "Allow service role full access on email_events" on public.email_events for all using (true);
+

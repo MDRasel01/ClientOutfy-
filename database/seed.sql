@@ -40,3 +40,4 @@ insert into public.settings (
   ]'::jsonb
 )
 on conflict (id) do nothing;
+

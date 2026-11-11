@@ -173,3 +173,4 @@ as $$
   ) order by days.d), '[]'::json)
   from days left join agg on agg.d = days.d;
 $$;
+

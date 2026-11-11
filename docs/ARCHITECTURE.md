@@ -68,3 +68,4 @@ graph TD
 - **Database Engine:** PostgreSQL via Supabase.
 - **Key Schemas:** `licenses`, `payments`, `plans`, `admins`, `settings`, `email_events`.
 - **Stored Procedures:** `deduct_credit`, `track_open`, `email_stats`, `email_stats_buckets`, `email_daily`.
+
