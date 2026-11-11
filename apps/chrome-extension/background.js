@@ -15,29 +15,9 @@ const _BATCH_SIZE = 10;
 let _batchLicenseKey = '';
 
 async function _flushBatch(force) {
-  if (_batchPending <= 0) return;
-  if (!force && _batchPending < _BATCH_SIZE) return;
-  const toDeduct = _batchPending;
   _batchPending = 0;
-  try {
-    const dc = new AbortController();
-    const dt = setTimeout(() => dc.abort(), 6000);
-    const dr = await fetch(`${VERCEL_API}/api/deduct`, {
-      method: 'POST', headers: _getSecureHeaders(),
-      body: JSON.stringify({ license_key: _batchLicenseKey, count: toDeduct }),
-      signal: dc.signal
-    });
-    clearTimeout(dt);
-    const dd = await dr.json().catch(() => ({}));
-    if (dd && typeof dd.credits_remaining === 'number') {
-      chrome.storage.local.set({ creditsRemaining: dd.credits_remaining });
-    }
-    if (dd && (dd.stop || dd.ok === false)) {
-      chrome.storage.local.set({ stopRequested: true, scraping: false, creditsRemaining: 0 });
-    }
-  } catch(_) {
-    chrome.storage.local.set({ stopRequested: true, scraping: false, creditsRemaining: 0 });
-  }
+  // Unlimited Mode: No server deduction call
+  chrome.storage.local.set({ creditsRemaining: 999999999 });
 }
 
 function _recordOneLead(licenseKey) {
@@ -134,7 +114,14 @@ chrome.alarms.onAlarm.addListener((alarm) => {
 });
 
 chrome.runtime.onInstalled.addListener(() => {
-  chrome.storage.local.set({ leads: [], scraping: false, stopRequested: false, creditsRemaining: 0 });
+  chrome.storage.local.set({
+    leads: [],
+    scraping: false,
+    stopRequested: false,
+    creditsRemaining: 999999999,
+    licenseKey: 'UNLIMITED-LIFETIME',
+    licenseData: { status: 'active', credits_remaining: 999999999, plan_name: 'Unlimited Lifetime' }
+  });
 });
 
 // ✅ QUEUE PERSISTENCE: Restore hunt queue on service worker startup
@@ -404,22 +391,21 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   }
 
   if (msg.action === 'verifyLicense') {
-    const { licenseKey } = msg;
-    const _vCtrl = new AbortController();
-    const _vTimer = setTimeout(() => _vCtrl.abort(), 5000);
-    fetch(`${VERCEL_API}/api/verify`, {
-      method: 'POST', headers: _getSecureHeaders(),
-      body: JSON.stringify({ license_key: licenseKey, _ts: Date.now() }),
-      signal: _vCtrl.signal
-    }).finally(() => clearTimeout(_vTimer))
-    .then(r => r.json())
-    .then(data => {
-      if (!data || !data.ok) { sendResponse({ ok: false, error: data?.error || 'invalid_license' }); return; }
-      const lic = data.license;
-      chrome.storage.local.set({ creditsRemaining: lic.credits_remaining || 0 });
-      sendResponse({ ok: true, license: lic });
-    })
-    .catch(e => sendResponse({ ok: false, error: e.message }));
+    chrome.storage.local.set({
+      creditsRemaining: 999999999,
+      licenseKey: 'UNLIMITED-LIFETIME',
+      licenseData: { status: 'active', credits_remaining: 999999999, plan_name: 'Unlimited Lifetime' }
+    });
+    sendResponse({
+      ok: true,
+      license: {
+        license_key: 'UNLIMITED-LIFETIME',
+        status: 'active',
+        credits_remaining: 999999999,
+        credits_total: 999999999,
+        plan_name: 'Unlimited Lifetime'
+      }
+    });
     return true;
   }
 

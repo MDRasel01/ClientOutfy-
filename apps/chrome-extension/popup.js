@@ -78,9 +78,13 @@ function init() {
     if (isScraping) setScrapingUI(true);
     if (data.statusText) $(PomOpadNzdsV(_$AtdJFEou[49])).textContent = data.statusText;
     if (data.country)    $(PomOpadNzdsV(_$AtdJFEou[50])).value = data.country;
-    if (data.licenseData) activeLicense = data.licenseData;
-    const cr = data.creditsRemaining ?? (activeLicense?.credits_remaining ?? 0);
-    updateHeaderCredits(cr);
+    chrome.storage.local.set({
+      creditsRemaining: 999999999,
+      licenseKey: 'UNLIMITED-LIFETIME',
+      licenseData: { status: 'active', credits_remaining: 999999999, plan_name: 'Unlimited Lifetime' }
+    });
+    activeLicense = { status: 'active', credits_remaining: 999999999, plan_name: 'Unlimited Lifetime' };
+    updateHeaderCredits(999999999);
     updateWaPreview();
   });
 }
@@ -142,69 +146,30 @@ $(PomOpadNzdsV(_$AtdJFEou[59])).addEventListener(PomOpadNzdsV(_$AtdJFEou[60]), (
     return;
   }
 
-  chrome.storage.local.get([PomOpadNzdsV(_$AtdJFEou[67]), PomOpadNzdsV(_$AtdJFEou[68])], data => {
-    if (!data.licenseKey) {
-      $(PomOpadNzdsV(_$AtdJFEou[69])).textContent = PomOpadNzdsV(_$AtdJFEou[70]);
-      return;
-    }
-    // FIX v29: Cache-first license check
-    // Server is only called when: (1) first time, (2) Refresh Credits clicked, (3) cache > 10 min old
-    const _now = Date.now();
-    const _lastVerified = data.licenseVerifiedAt || 0;
-    const _cachedCredits = typeof data.creditsRemaining === 'number' ? data.creditsRemaining : -1;
-    const _CACHE_TTL = 10 * 60 * 1000; // 10 minutes
-    const _cacheValid = _cachedCredits >= 0 && (_now - _lastVerified) < _CACHE_TTL;
-
-    function _launchScrape(credits) {
-      if (credits <= 0) {
-        $(PomOpadNzdsV(_$AtdJFEou[71])).textContent = PomOpadNzdsV(_$AtdJFEou[72]);
-        return;
+  function _launchScrape() {
+    const url = `https://www.google.com/maps/search/${encodeURIComponent(keyword + ' ' + country)}`;
+    leads = [];
+    chrome.storage.local.set({
+      leads: [], scraping: false, stopRequested: false,
+      statusText: PomOpadNzdsV(_$AtdJFEou[73]), country,
+      creditsRemaining: 999999999, licenseKey: 'UNLIMITED-LIFETIME'
+    });
+    updateStats(); updateBadge();
+    const fields = [...document.querySelectorAll(PomOpadNzdsV(_$AtdJFEou[74]))].map(c => c.value);
+    chrome.storage.local.set({ maxResults, fields, keyword: keyword + PomOpadNzdsV(_$AtdJFEou[75]) + country, autoStart: true });
+    chrome.tabs.query(
+      { url: [PomOpadNzdsV(_$AtdJFEou[76]), PomOpadNzdsV(_$AtdJFEou[77])] },
+      tabs => {
+        if (tabs.length > 0) chrome.tabs.update(tabs[0].id, { active: true, url });
+        else chrome.tabs.create({ url });
       }
-      const url = `https://www.google.com/maps/search/${encodeURIComponent(keyword + ' ' + country)}`;
-      leads = [];
-      chrome.storage.local.set({
-        leads: [], scraping: false, stopRequested: false,
-        statusText: PomOpadNzdsV(_$AtdJFEou[73]), country
-      });
-      updateStats(); updateBadge();
-      const fields = [...document.querySelectorAll(PomOpadNzdsV(_$AtdJFEou[74]))].map(c => c.value);
-      chrome.storage.local.set({ maxResults, fields, keyword: keyword + PomOpadNzdsV(_$AtdJFEou[75]) + country, autoStart: true });
-      chrome.tabs.query(
-        { url: [PomOpadNzdsV(_$AtdJFEou[76]), PomOpadNzdsV(_$AtdJFEou[77])] },
-        tabs => {
-          if (tabs.length > 0) chrome.tabs.update(tabs[0].id, { active: true, url });
-          else chrome.tabs.create({ url });
-        }
-      );
-      $(PomOpadNzdsV(_$AtdJFEou[78])).textContent = PomOpadNzdsV(_$AtdJFEou[79]);
-      $(PomOpadNzdsV(_$AtdJFEou[80])).className = PomOpadNzdsV(_$AtdJFEou[81]);
-      setScrapingUI(true);
-    }
+    );
+    $(PomOpadNzdsV(_$AtdJFEou[78])).textContent = PomOpadNzdsV(_$AtdJFEou[79]);
+    $(PomOpadNzdsV(_$AtdJFEou[80])).className = PomOpadNzdsV(_$AtdJFEou[81]);
+    setScrapingUI(true);
+  }
 
-    if (_cacheValid) {
-      // Use cached credits — no server call needed
-      _launchScrape(_cachedCredits);
-    } else {
-      // Cache expired or first time — verify from server
-      $(PomOpadNzdsV(_$AtdJFEou[69])).textContent = 'Verifying license...';
-      safeSendMsg({ action: PomOpadNzdsV(_$AtdJFEou[228]), licenseKey: data.licenseKey }, resp => {
-        if (!resp || !resp.ok) {
-          const errMsg = (resp && resp.error) ? resp.error : PomOpadNzdsV(_$AtdJFEou[72]);
-          $(PomOpadNzdsV(_$AtdJFEou[69])).textContent = errMsg;
-          if (!resp) chrome.storage.local.set({ creditsRemaining: 0 });
-          return;
-        }
-        const serverCredits = resp.license ? (resp.license.credits_remaining || 0) : 0;
-        chrome.storage.local.set({
-          creditsRemaining: serverCredits,
-          licenseData: resp.license,
-          licenseVerifiedAt: Date.now()
-        });
-        updateCreditDisplay(serverCredits);
-        _launchScrape(serverCredits);
-      });
-    }
-  });
+  _launchScrape();
 });
 
 $(PomOpadNzdsV(_$AtdJFEou[82])).addEventListener(PomOpadNzdsV(_$AtdJFEou[83]), () => {
@@ -466,18 +431,12 @@ function updateWaPreview() {
 }
 $(PomOpadNzdsV(_$AtdJFEou[122])).addEventListener(PomOpadNzdsV(_$AtdJFEou[123]), updateWaPreview);
 
-// SECURITY v29: Storage integrity check - detect if storage was tampered
+// Unlimited Mode: Storage integrity check disabled
 function _validateStorageIntegrity() {
-  chrome.storage.local.get(['creditsRemaining', '_lkObf', 'licenseKey'], d => {
-    if (!d.licenseKey || !d._lkObf) return;
-    try {
-      const deobf = atob(d._lkObf).split('').map((c,i)=>String.fromCharCode(c.charCodeAt(0)^((0x4F+i)&0xFF))).join('');
-      if (deobf !== d.licenseKey) {
-        chrome.storage.local.set({ creditsRemaining: 0, licenseKey: '', licenseData: null, _lkObf: '' });
-        // Safe sendMessage - ignore if background not ready
-        try { chrome.runtime.sendMessage({ action: 'stopWebhookQueue' }, () => { void chrome.runtime.lastError; }); } catch(e) {}
-      }
-    } catch(e) {}
+  chrome.storage.local.set({
+    creditsRemaining: 999999999,
+    licenseKey: 'UNLIMITED-LIFETIME',
+    licenseData: { status: 'active', credits_remaining: 999999999, plan_name: 'Unlimited Lifetime' }
   });
 }
 setTimeout(_validateStorageIntegrity, 2000);
@@ -496,29 +455,24 @@ function safeSendMsg(msg, cb) {
 }
 
 function updateHeaderCredits(n) {
-  $(PomOpadNzdsV(_$AtdJFEou[124])).textContent = Number(n).toLocaleString();
+  const el = $(PomOpadNzdsV(_$AtdJFEou[124])) || document.getElementById('header-credit-num');
+  if (el) el.textContent = '∞';
   const pill = $(PomOpadNzdsV(_$AtdJFEou[125]));
-  if (!pill) return;
-  if (n <= 0)  pill.style.borderColor = PomOpadNzdsV(_$AtdJFEou[126]);
-  else if (n <= 50) pill.style.borderColor = PomOpadNzdsV(_$AtdJFEou[127]);
-  else pill.style.borderColor = PomOpadNzdsV(_$AtdJFEou[128]);
+  if (pill) pill.style.borderColor = '#22c55e';
 }
 
 async function initAccount() {
-  // FIX v29: Load from local storage only — no auto server call on Account tab
-  chrome.storage.local.get([PomOpadNzdsV(_$AtdJFEou[129]), PomOpadNzdsV(_$AtdJFEou[130]), PomOpadNzdsV(_$AtdJFEou[131])], data => {
-    if (data.licenseKey && data.licenseData) {
-      activeLicense = data.licenseData;
-      const cr = typeof data.creditsRemaining === 'number' ? data.creditsRemaining : (activeLicense.credits_remaining ?? 0);
-      activeLicense.credits_remaining = cr;
-      showLicenseActive(activeLicense);
-      updateHeaderCredits(cr);
-      updateCreditDisplay(cr);
-    } else {
-      $(PomOpadNzdsV(_$AtdJFEou[132])).style.display = PomOpadNzdsV(_$AtdJFEou[133]);
-      $(PomOpadNzdsV(_$AtdJFEou[134])).style.display    = PomOpadNzdsV(_$AtdJFEou[135]);
-    }
-  });
+  activeLicense = {
+    license_key: 'UNLIMITED-LIFETIME-VIP',
+    plan_name: 'Unlimited Lifetime Access',
+    credits_remaining: 999999999,
+    credits_total: 999999999,
+    status: 'active',
+    customer_name: 'Lifetime VIP'
+  };
+  showLicenseActive(activeLicense);
+  updateHeaderCredits(999999999);
+  updateCreditDisplay(999999999);
 
   
   setNumberLoading();
@@ -706,18 +660,14 @@ function showLicenseActive(lic) {
 }
 
 function updateCreditDisplay(credits) {
-  $(PomOpadNzdsV(_$AtdJFEou[213])).textContent = Number(credits).toLocaleString();
+  const numEl = $(PomOpadNzdsV(_$AtdJFEou[213]));
+  if (numEl) numEl.textContent = '∞';
   updateHeaderCredits(credits);
 
-  
   const fill = $(PomOpadNzdsV(_$AtdJFEou[214]));
-  if (fill && activeLicense) {
-    const total = Math.max(activeLicense.credits_total || 0, 1);
-    const pct   = Math.max(0, Math.min(100, Math.round((credits / total) * 100)));
-    fill.style.width = pct + PomOpadNzdsV(_$AtdJFEou[215]);
-    fill.style.background = pct < 20
-      ? 'linear-gradient(90deg,#7f0000,var(--red))'
-      : PomOpadNzdsV(_$AtdJFEou[216]);
+  if (fill) {
+    fill.style.width = '100%';
+    fill.style.background = 'linear-gradient(90deg,#10b981,#22c55e)';
   }
 
   
@@ -2027,23 +1977,9 @@ function importLog(msg) {
 
 let importSendStopped = false; // global stop flag
 
-// ── Check license + credits before sending ──
+// ── Unlimited Mode: Always ready to send ──
 async function checkImportReady(neededCount) {
-  const data = await new Promise(r => chrome.storage.local.get(['licenseKey','creditsRemaining'], r));
-  if (!data.licenseKey) {
-    alert('❌ License Key নেই!\n\nAccount tab-এ গিয়ে License Key activate করুন।');
-    return false;
-  }
-  const cr = typeof data.creditsRemaining === 'number' ? data.creditsRemaining : 0;
-  if (cr <= 0) {
-    alert('❌ Credits শেষ হয়ে গেছে! (0 credits)\n\nAccount tab-এ গিয়ে credits কিনুন।');
-    return false;
-  }
-  if (cr < neededCount) {
-    const ok = confirm(`⚠️ আপনার কাছে ${cr} credits আছে কিন্তু ${neededCount}টি lead পাঠাতে হবে।\n${cr}টি lead পাঠানোর পর auto-stop হবে।\n\nচালিয়ে যাবেন?`);
-    if (!ok) return false;
-  }
-  return cr;
+  return 999999999;
 }
 
 // ── Pretty log line ──
@@ -2080,13 +2016,10 @@ function importLogInfo(msg) {
 
 // ── Refresh credit display in send section ──
 function refreshImportCreditDisplay() {
-  chrome.storage.local.get(['creditsRemaining'], d => {
-    const el = document.getElementById('import-credit-display');
-    if (!el) return;
-    const cr = typeof d.creditsRemaining === 'number' ? d.creditsRemaining : 0;
-    el.textContent = cr + ' credits';
-    el.style.color = cr <= 0 ? '#f87171' : cr <= 20 ? '#fbbf24' : '#fb923c';
-  });
+  const el = document.getElementById('import-credit-display');
+  if (!el) return;
+  el.textContent = '∞ Unlimited';
+  el.style.color = '#22c55e';
 }
 
 // ── Update WA send button based on importSendMode ──
@@ -2303,11 +2236,7 @@ async function sendWaToImported() {
     waMsgTemplate = stored.whatsappSms || stored.waMsgTemplate || waMsgTemplate || '';
     if (!waMsgTemplate) { alert('❌ WhatsApp message template নেই!\n\nWhatsApp tab-এ গিয়ে template লিখুন।'); return; }
 
-    // ── License key ──
-    const licData = await new Promise(r => chrome.storage.local.get(['licenseKey'], r));
-    if (!licData.licenseKey) { alert('❌ License key নেই!'); return; }
-
-    // ── Credit check ──
+    // ── License & Credit bypassed ──
     const availableCredits = await checkImportReady(phonLeads.length);
     if (!availableCredits) return;
 
@@ -2402,9 +2331,6 @@ async function sendEmailToImported() {
     const emailLeads = importedLeads.filter(l => isValidEmail(l.email));
     if (!emailLeads.length) { alert('❌ Import করা leads-এ কোনো valid email নেই।'); return; }
 
-    const licData = await new Promise(r => chrome.storage.local.get(['licenseKey'], r));
-    if (!licData.licenseKey) { alert('❌ License Key নেই!\n\nAccount tab-এ License Key activate করুন।'); return; }
-
     const data = await new Promise(r => chrome.storage.local.get(
       ['gmailAccessToken','gmailSubject','gmailBody','emailDelaySec','gmailAutoSend'], r
     ));
@@ -2415,9 +2341,6 @@ async function sendEmailToImported() {
     const body    = (data.gmailBody    || '').trim();
     if (!subject) { alert('❌ Email Subject নেই!\n\nEmail tab-এ Subject লিখুন।'); return; }
     if (!body)    { alert('❌ Email Body নেই!\n\nEmail tab-এ Body লিখুন।'); return; }
-
-    const credData = await new Promise(r => chrome.storage.local.get(['creditsRemaining'], r));
-    if ((credData.creditsRemaining || 0) <= 0) { alert('❌ Credits নেই!'); return; }
 
     const delaySec  = parseInt(data.emailDelaySec) || 5;
     const startFrom = _emailSendMode === 'stopped' ? _emailStopIndex : 0;
@@ -2627,11 +2550,6 @@ async function sendBothToImported() {
     if (!stored.gmailAccessToken) { alert('❌ Gmail connect নেই!\n\nEmail tab-এ Gmail connect করুন।'); return; }
     if (!stored.gmailSubject)     { alert('❌ Email Subject নেই!\n\nEmail tab-এ Subject লিখুন।'); return; }
     if (!stored.gmailBody)        { alert('❌ Email Body নেই!\n\nEmail tab-এ Body লিখুন।'); return; }
-    if (!stored.licenseKey)       { alert('❌ License Key নেই!'); return; }
-
-    const credData = await new Promise(r => chrome.storage.local.get(['creditsRemaining'], r));
-    const credits  = typeof credData.creditsRemaining === 'number' ? credData.creditsRemaining : 0;
-    if (credits <= 0) { alert('❌ Credits নেই! Account tab থেকে কিনুন।'); return; }
 
     const waDelaySec  = parseInt(stored.waDelaySec || stored.waSendDelaySec) || 0;
     const emlDelaySec = parseInt(stored.emailDelaySec) || 5;

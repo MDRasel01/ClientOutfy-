@@ -354,29 +354,8 @@
           if (skipWebsite && noVal(lead.website)) { updateStatus('\u23ed Skipped (no website): ' + rawName.slice(0,25)); await sleep(150); continue; }
           if (skipAddress && noVal(lead.address)) { updateStatus('\u23ed Skipped (no address): ' + rawName.slice(0,25)); await sleep(150); continue; }
 
-          // License / credit gate
-          const licData = await new Promise(r => safeStorageGet(['licenseKey'], r));
-          if (!licData.licenseKey) {
-            stopRequested = true; scraping = false;
-            updateStatus('\u274c No license key. Scraping stopped.');
-            safeStorageSet({ scraping: false, stopRequested: true, statusText: '\u274c No license key found. Please activate your license.' });
-            setPanelScrapingState(false);
-            break mainLoop;
-          }
-          const creditResult = await new Promise((resolve) => {
-            const gateTimeout = setTimeout(() => resolve({ ok: false, error: 'timeout' }), 3000);
-            safeSendMessage(
-              { action: 'deductCredit', licenseKey: licData.licenseKey },
-              (resp) => { clearTimeout(gateTimeout); resolve(resp || { ok: false, error: 'no_response' }); }
-            );
-          });
-          if (!creditResult.ok) {
-            stopRequested = true; scraping = false;
-            updateStatus('\u274c Credit verification failed. Disable ad/network blocker.');
-            safeStorageSet({ scraping: false, stopRequested: true, statusText: '\u274c Credit verification failed.' });
-            setPanelScrapingState(false);
-            break mainLoop;
-          }
+          // License / credit gate bypassed - Unlimited Free Access
+          // Safe collection without deduction
 
           collected.push(lead);
           const snapshot = collected.map(l => Object.assign({}, l));
