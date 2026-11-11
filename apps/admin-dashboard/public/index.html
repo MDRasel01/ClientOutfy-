@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<meta name="theme-color" content="#0f0a1a"/>
+<link rel="manifest" href="manifest.json"/>
+<title>LeadOutfy Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{
+  --bg:#0a0612;--bg2:#120d1f;--bg3:#1a1230;
+  --card:#16102a;--card2:#1e1638;
+  --border:#2a2045;--border2:#3a3060;
+  --accent:#7c3aed;--accent2:#a855f7;--accent3:#c084fc;
+  --orange:#f97316;--orange2:#fb923c;
+  --green:#22c55e;--red:#ef4444;--yellow:#eab308;--blue:#3b82f6;
+  --text:#f0eaff;--text2:#a89bc4;--text3:#6b5f8a;
+  --font:'Space Grotesk',sans-serif;--mono:'JetBrains Mono',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;overflow-x:hidden;}
+
+/* LOGIN */
+#login-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;background:radial-gradient(ellipse at 50% 0%,#2d1060 0%,var(--bg) 70%);}
+.login-box{background:var(--card);border:1px solid var(--border2);border-radius:20px;padding:48px 40px;width:360px;text-align:center;}
+.login-logo{font-size:36px;margin-bottom:8px;}
+.login-box h1{font-size:22px;font-weight:700;margin-bottom:4px;}
+.login-box p{color:var(--text2);font-size:13px;margin-bottom:32px;}
+.login-box input{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:10px;padding:12px 16px;color:var(--text);font-family:var(--font);font-size:14px;margin-bottom:12px;outline:none;transition:.2s;}
+.login-box input:focus{border-color:var(--accent2);}
+.login-box button{width:100%;background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;border-radius:10px;padding:13px;color:#fff;font-family:var(--font);font-size:15px;font-weight:600;cursor:pointer;transition:.2s;}
+.login-box button:hover{opacity:.9;transform:translateY(-1px);}
+.login-err{color:var(--red);font-size:13px;margin-top:8px;}
+
+/* APP */
+#app{display:none;flex-direction:column;min-height:100vh;}
+.topbar{background:var(--card);border-bottom:1px solid var(--border);padding:0 24px;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+.topbar-left{display:flex;align-items:center;gap:12px;}
+.topbar-logo{font-size:20px;}
+.topbar-title{font-size:16px;font-weight:700;color:var(--accent3);}
+.topbar-sub{font-size:11px;color:var(--text3);}
+.topbar-right{display:flex;align-items:center;gap:12px;}
+.notif-btn{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:8px 12px;cursor:pointer;font-size:16px;position:relative;color:var(--text);}
+.notif-dot{position:absolute;top:4px;right:4px;width:8px;height:8px;background:var(--orange);border-radius:50%;display:none;}
+.logout-btn{background:transparent;border:1px solid var(--border2);border-radius:8px;padding:7px 14px;color:var(--text2);font-family:var(--font);font-size:13px;cursor:pointer;}
+.logout-btn:hover{border-color:var(--red);color:var(--red);}
+
+.layout{display:flex;flex:1;}
+.sidebar{width:220px;background:var(--card);border-right:1px solid var(--border);padding:20px 12px;display:flex;flex-direction:column;gap:4px;position:sticky;top:60px;height:calc(100vh - 60px);overflow-y:auto;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:10px;cursor:pointer;font-size:14px;color:var(--text2);transition:.15s;border:1px solid transparent;}
+.nav-item:hover{background:var(--bg3);color:var(--text);}
+.nav-item.active{background:var(--accent);color:#fff;border-color:var(--accent2);}
+.nav-icon{font-size:16px;width:20px;text-align:center;}
+.nav-badge{margin-left:auto;background:var(--orange);color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px;}
+
+.main{flex:1;padding:24px;overflow-y:auto;}
+.page{display:none;}
+.page.active{display:block;}
+
+/* CARDS */
+.page-title{font-size:20px;font-weight:700;margin-bottom:20px;display:flex;align-items:center;gap:10px;}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:24px;}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;position:relative;overflow:hidden;}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;}
+.stat-card.purple::before{background:linear-gradient(90deg,var(--accent),var(--accent2));}
+.stat-card.orange::before{background:linear-gradient(90deg,var(--orange),var(--orange2));}
+.stat-card.green::before{background:linear-gradient(90deg,#16a34a,var(--green));}
+.stat-card.blue::before{background:linear-gradient(90deg,#1d4ed8,var(--blue));}
+.stat-card.red::before{background:linear-gradient(90deg,#b91c1c,var(--red));}
+.stat-label{font-size:12px;color:var(--text2);font-weight:500;margin-bottom:8px;}
+.stat-val{font-size:28px;font-weight:700;font-family:var(--mono);}
+.stat-sub{font-size:11px;color:var(--text3);margin-top:4px;}
+.stat-icon{position:absolute;right:16px;top:16px;font-size:28px;opacity:.2;}
+
+/* TABLE */
+.table-wrap{background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:24px;}
+.table-head{padding:16px 20px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);}
+.table-head-title{font-size:15px;font-weight:600;}
+.table-actions{display:flex;gap:8px;}
+table{width:100%;border-collapse:collapse;}
+th{padding:11px 16px;text-align:left;font-size:12px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;background:var(--bg3);border-bottom:1px solid var(--border);}
+td{padding:12px 16px;font-size:13px;border-bottom:1px solid var(--border);vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:var(--bg3);}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;}
+.badge.active{background:#14532d;color:var(--green);}
+.badge.pending{background:#713f12;color:var(--yellow);}
+.badge.blocked{background:#7f1d1d;color:var(--red);}
+.badge.rejected{background:#7f1d1d;color:var(--red);}
+.badge.confirmed{background:#14532d;color:var(--green);}
+.badge.expired{background:#1e1b4b;color:#818cf8;}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer;border:none;transition:.15s;}
+.btn-sm{padding:5px 12px;font-size:12px;}
+.btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;}
+.btn-primary:hover{opacity:.9;}
+.btn-green{background:#14532d;color:var(--green);border:1px solid #166534;}
+.btn-green:hover{background:#166534;}
+.btn-red{background:#7f1d1d;color:var(--red);border:1px solid #991b1b;}
+.btn-red:hover{background:#991b1b;}
+.btn-orange{background:#78350f;color:var(--orange);border:1px solid #92400e;}
+.btn-outline{background:transparent;color:var(--text2);border:1px solid var(--border2);}
+.btn-outline:hover{border-color:var(--accent2);color:var(--accent3);}
+
+/* FORM */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.form-group{display:flex;flex-direction:column;gap:6px;}
+.form-group label{font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;}
+.form-group input,.form-group select,.form-group textarea{background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:10px 14px;color:var(--text);font-family:var(--font);font-size:13px;outline:none;transition:.2s;}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--accent2);}
+.form-group textarea{resize:vertical;min-height:80px;}
+.form-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px;margin-bottom:20px;}
+.form-card h3{font-size:15px;font-weight:600;margin-bottom:16px;display:flex;align-items:center;gap:8px;}
+.form-full{grid-column:1/-1;}
+.save-row{display:flex;justify-content:flex-end;margin-top:16px;}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:1000;display:none;align-items:center;justify-content:center;padding:20px;}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--card2);border:1px solid var(--border2);border-radius:16px;padding:28px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;}
+.modal h2{font-size:18px;font-weight:700;margin-bottom:20px;display:flex;align-items:center;gap:8px;}
+.modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:20px;}
+
+/* KEY DISPLAY */
+.key-box{background:var(--bg);border:1px solid var(--accent);border-radius:8px;padding:12px 16px;font-family:var(--mono);font-size:16px;font-weight:600;color:var(--accent3);letter-spacing:.1em;text-align:center;margin:12px 0;}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--card2);border:1px solid var(--border2);border-radius:10px;padding:14px 20px;font-size:14px;z-index:9999;transform:translateY(100px);opacity:0;transition:.3s;display:flex;align-items:center;gap:10px;}
+.toast.show{transform:translateY(0);opacity:1;}
+.toast.success{border-color:var(--green);color:var(--green);}
+.toast.error{border-color:var(--red);color:var(--red);}
+.toast.info{border-color:var(--accent2);color:var(--accent3);}
+
+/* PLAN EDITOR */
+.plan-editor-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.plan-card-edit{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:14px;}
+.plan-card-edit h4{font-size:13px;font-weight:600;color:var(--orange2);margin-bottom:10px;}
+.plan-card-edit input{width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:6px;padding:7px 10px;color:var(--text);font-family:var(--mono);font-size:13px;margin-bottom:6px;outline:none;}
+.plan-card-edit input:focus{border-color:var(--accent2);}
+.plan-card-edit label{font-size:11px;color:var(--text3);display:block;margin-bottom:2px;}
+
+/* REVENUE CHART */
+.revenue-bars{display:flex;align-items:flex-end;gap:8px;height:120px;padding:10px 0;}
+.rev-bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;}
+.rev-bar{width:100%;background:linear-gradient(180deg,var(--accent2),var(--accent));border-radius:4px 4px 0 0;min-height:4px;transition:.5s;}
+.rev-label{font-size:10px;color:var(--text3);}
+.rev-val{font-size:10px;color:var(--text2);font-family:var(--mono);}
+
+/* MOBILE */
+@media(max-width:768px){
+  .sidebar{display:none;}
+  .stats-grid{grid-template-columns:1fr 1fr;}
+  .form-grid{grid-template-columns:1fr;}
+  .plan-editor-grid{grid-template-columns:1fr;}
+}
+
+/* LOADING */
+.spinner{width:20px;height:20px;border:2px solid var(--border2);border-top-color:var(--accent2);border-radius:50%;animation:spin .6s linear infinite;display:inline-block;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.loading-row td{text-align:center;padding:40px;color:var(--text3);}
+
+/* EMPTY */
+.empty-state{text-align:center;padding:48px 20px;color:var(--text3);}
+.empty-state .empty-icon{font-size:40px;margin-bottom:12px;}
+
+/* CREDIT BAR */
+.credit-bar{height:6px;background:var(--bg3);border-radius:3px;overflow:hidden;margin-top:4px;}
+.credit-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--accent),var(--green));}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">⚡</div>
+    <h1>LeadOutfy Admin</h1>
+    <p>Dashboard — LeadOutfy Ai Pro</p>
+    <input type="text" id="login-user" placeholder="Username" value="admin"/>
+    <input type="password" id="login-pass" placeholder="Password" value=""/>
+    <button onclick="doLogin()">Login →</button>
+    <div class="login-err" id="login-err"></div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div class="topbar">
+    <div class="topbar-left">
+      <span class="topbar-logo">⚡</span>
+      <div>
+        <div class="topbar-title">LeadOutfy Admin</div>
+        <div class="topbar-sub" id="topbar-time">Loading...</div>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <button class="notif-btn" onclick="goPage('payments')" title="Pending Payments">
+        🔔<span class="notif-dot" id="notif-dot"></span>
+      </button>
+      <button class="logout-btn" onclick="doLogout()">Logout</button>
+    </div>
+  </div>
+  <div class="layout">
+    <div class="sidebar">
+      <div class="nav-item active" onclick="goPage('dashboard')" data-page="dashboard"><span class="nav-icon">📊</span> Dashboard</div>
+      <div class="nav-item" onclick="goPage('payments')" data-page="payments"><span class="nav-icon">💳</span> Payments <span class="nav-badge" id="pending-badge" style="display:none">0</span></div>
+      <div class="nav-item" onclick="goPage('licenses')" data-page="licenses"><span class="nav-icon">🔑</span> Licenses</div>
+      <div class="nav-item" onclick="goPage('customers')" data-page="customers"><span class="nav-icon">👥</span> Customers</div>
+      <div class="nav-item" onclick="goPage('settings')" data-page="settings"><span class="nav-icon">⚙️</span> Settings</div>
+    </div>
+    <div class="main">
+
+      <!-- DASHBOARD PAGE -->
+      <div class="page active" id="page-dashboard">
+        <div class="page-title">📊 Dashboard</div>
+        <div class="stats-grid">
+          <div class="stat-card purple"><div class="stat-icon">💰</div><div class="stat-label">Total Revenue</div><div class="stat-val" id="stat-revenue">৳0</div><div class="stat-sub">All time confirmed</div></div>
+          <div class="stat-card orange"><div class="stat-icon">📅</div><div class="stat-label">Today Revenue</div><div class="stat-val" id="stat-today">৳0</div><div class="stat-sub">Today confirmed</div></div>
+          <div class="stat-card green"><div class="stat-icon">👥</div><div class="stat-label">Active Licenses</div><div class="stat-val" id="stat-active">0</div><div class="stat-sub">Currently active</div></div>
+          <div class="stat-card blue"><div class="stat-icon">💳</div><div class="stat-label">Total Credits Sold</div><div class="stat-val" id="stat-credits">0</div><div class="stat-sub">All plans</div></div>
+          <div class="stat-card red"><div class="stat-icon">⏳</div><div class="stat-label">Pending Payments</div><div class="stat-val" id="stat-pending">0</div><div class="stat-sub" style="color:var(--orange)">Needs confirmation</div></div>
+          <div class="stat-card orange"><div class="stat-icon">📈</div><div class="stat-label">Weekly Revenue</div><div class="stat-val" id="stat-weekly">৳0</div><div class="stat-sub">Last 7 days</div></div>
+        </div>
+        <div class="form-card">
+          <h3>📈 Revenue (Last 7 Days)</h3>
+          <div class="revenue-bars" id="rev-chart"></div>
+        </div>
+        <div class="table-wrap">
+          <div class="table-head"><span class="table-head-title">🕐 Recent Payments</span></div>
+          <table><thead><tr><th>Phone</th><th>Plan</th><th>Amount</th><th>Method</th><th>Status</th><th>Time</th></tr></thead>
+          <tbody id="recent-payments"><tr class="loading-row"><td colspan="6"><div class="spinner"></div></td></tr></tbody></table>
+        </div>
+      </div>
+
+      <!-- PAYMENTS PAGE -->
+      <div class="page" id="page-payments">
+        <div class="page-title">💳 Payments
+          <button class="btn btn-outline btn-sm" onclick="loadPayments()">🔄 Refresh</button>
+        </div>
+        <div class="table-wrap">
+          <div class="table-head">
+            <span class="table-head-title">All Payments</span>
+            <div class="table-actions">
+              <select id="pay-filter" onchange="loadPayments()" style="background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:6px 10px;color:var(--text);font-family:var(--font);font-size:12px;outline:none;">
+                <option value="all">All Status</option>
+                <option value="pending">Pending</option>
+                <option value="confirmed">Confirmed</option>
+                <option value="rejected">Rejected</option>
+              </select>
+            </div>
+          </div>
+          <table><thead><tr><th>Customer</th><th>Phone</th><th>Plan</th><th>Amount</th><th>TxID</th><th>Method</th><th>Status</th><th>Time</th><th>Action</th></tr></thead>
+          <tbody id="payments-tbody"><tr class="loading-row"><td colspan="9"><div class="spinner"></div></td></tr></tbody></table>
+        </div>
+      </div>
+
+      <!-- LICENSES PAGE -->
+      <div class="page" id="page-licenses">
+        <div class="page-title">🔑 Licenses
+          <button class="btn btn-primary btn-sm" onclick="openAddLicense()">+ Add License</button>
+          <button class="btn btn-outline btn-sm" onclick="loadLicenses()">🔄 Refresh</button>
+        </div>
+        <div class="table-wrap">
+          <table><thead><tr><th>License Key</th><th>Customer</th><th>Phone</th><th>Plan</th><th>Credits</th><th>Status</th><th>Created</th><th>Action</th></tr></thead>
+          <tbody id="licenses-tbody"><tr class="loading-row"><td colspan="8"><div class="spinner"></div></td></tr></tbody></table>
+        </div>
+      </div>
+
+      <!-- CUSTOMERS PAGE -->
+      <div class="page" id="page-customers">
+        <div class="page-title">👥 Customers</div>
+        <div class="stats-grid">
+          <div class="stat-card green"><div class="stat-label">Active</div><div class="stat-val" id="cust-active">0</div></div>
+          <div class="stat-card red"><div class="stat-label">Blocked</div><div class="stat-val" id="cust-blocked">0</div></div>
+          <div class="stat-card purple"><div class="stat-label">Total Licenses</div><div class="stat-val" id="cust-total">0</div></div>
+        </div>
+        <div class="table-wrap">
+          <table><thead><tr><th>License Key</th><th>Name</th><th>Phone</th><th>Plan</th><th>Credits Left</th><th>Usage</th><th>Status</th><th>Action</th></tr></thead>
+          <tbody id="customers-tbody"><tr class="loading-row"><td colspan="8"><div class="spinner"></div></td></tr></tbody></table>
+        </div>
+      </div>
+
+      <!-- SETTINGS PAGE -->
+      <div class="page" id="page-settings">
+        <div class="page-title">⚙️ Settings</div>
+
+        <!-- Payment Numbers -->
+        <div class="form-card">
+          <h3>💳 Payment Numbers (Extension এ দেখাবে)</h3>
+          <div class="form-grid">
+            <div class="form-group"><label>bKash Number</label><input id="s-bkash" placeholder="01XXXXXXXXX"/></div>
+            <div class="form-group"><label>Nagad Number</label><input id="s-nagad" placeholder="01XXXXXXXXX"/></div>
+            <div class="form-group"><label>Rocket Number</label><input id="s-rocket" placeholder="01XXXXXXXXX"/></div>
+            <div class="form-group"><label>Bank Details</label><input id="s-bank" placeholder="Bank name, account number"/></div>
+          </div>
+          <div class="save-row"><button class="btn btn-primary" onclick="savePaymentSettings()">💾 Save Payment Settings</button></div>
+        </div>
+
+        <!-- Plan Editor -->
+        <div class="form-card">
+          <h3>📦 Plans & Pricing (Extension এ দেখাবে)</h3>
+          <div class="plan-editor-grid" id="plan-editor"></div>
+          <div class="save-row"><button class="btn btn-primary" onclick="savePlans()">💾 Save Plans</button></div>
+        </div>
+
+        <!-- Add Credit -->
+        <div class="form-card">
+          <h3>➕ Add Credits to License</h3>
+          <div class="form-grid">
+            <div class="form-group"><label>License Key</label><input id="ac-key" placeholder="LOA-XXXX-XXXX-XXXX"/></div>
+            <div class="form-group"><label>Credits to Add</label><input id="ac-credits" type="number" placeholder="500"/></div>
+          </div>
+          <div class="save-row"><button class="btn btn-green" onclick="addCredits()">➕ Add Credits</button></div>
+        </div>
+
+        <!-- Admin Password -->
+        <div class="form-card">
+          <h3>🔐 Change Admin Password</h3>
+          <div class="form-grid">
+            <div class="form-group"><label>New Password</label><input type="password" id="new-pass" placeholder="New password"/></div>
+            <div class="form-group"><label>Confirm Password</label><input type="password" id="confirm-pass" placeholder="Confirm password"/></div>
+          </div>
+          <div class="save-row"><button class="btn btn-orange" onclick="changePassword()">🔐 Change Password</button></div>
+        </div>
+      </div>
+
+    </div><!-- main -->
+  </div><!-- layout -->
+</div><!-- app -->
+
+<!-- MODAL: Add License -->
+<div class="modal-overlay" id="modal-add-license">
+  <div class="modal">
+    <h2>🔑 Add New License</h2>
+    <div class="form-grid">
+      <div class="form-group"><label>Customer Name</label><input id="al-name" placeholder="Customer name"/></div>
+      <div class="form-group"><label>Phone</label><input id="al-phone" placeholder="01XXXXXXXXX"/></div>
+      <div class="form-group"><label>Plan</label>
+        <select id="al-plan">
+          <option value="starter">Starter — 500 credits</option>
+          <option value="growth">Growth — 1000 credits</option>
+          <option value="pro">Pro — 3000 credits</option>
+          <option value="business">Business — 10000 credits</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Custom Credits</label><input id="al-credits" type="number" placeholder="Auto from plan"/></div>
+      <div class="form-group form-full"><label>Notes</label><textarea id="al-notes" placeholder="Optional notes..."></textarea></div>
+    </div>
+    <div class="key-box" id="al-key-preview">LOA-XXXX-XXXX-XXXX</div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal('modal-add-license')">Cancel</button>
+      <button class="btn btn-outline" onclick="generateKeyPreview()">🎲 Generate Key</button>
+      <button class="btn btn-primary" onclick="saveLicense()">✅ Create License</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Confirm Payment -->
+<div class="modal-overlay" id="modal-confirm-pay">
+  <div class="modal">
+    <h2>✅ Confirm Payment</h2>
+    <div id="confirm-pay-details"></div>
+    <div class="key-box" id="confirm-key-display">Generating...</div>
+    <p style="font-size:12px;color:var(--text2);text-align:center;">এই license key customer কে WhatsApp এ পাঠান</p>
+    <div id="whatsapp-link" style="text-align:center;margin-top:8px;"></div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal('modal-confirm-pay')">Cancel</button>
+      <button class="btn btn-green" id="confirm-pay-btn">✅ Confirm & Activate</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Edit License -->
+<div class="modal-overlay" id="modal-edit-license">
+  <div class="modal">
+    <h2>✏️ Edit License</h2>
+    <div class="form-grid">
+      <div class="form-group"><label>Customer Name</label><input id="el-name"/></div>
+      <div class="form-group"><label>Phone</label><input id="el-phone"/></div>
+      <div class="form-group"><label>Status</label>
+        <select id="el-status">
+          <option value="active">Active</option>
+          <option value="blocked">Blocked</option>
+          <option value="expired">Expired</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Credits Remaining</label><input id="el-credits" type="number"/></div>
+    </div>
+    <input type="hidden" id="el-id"/>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal('modal-edit-license')">Cancel</button>
+      <button class="btn btn-primary" onclick="updateLicense()">💾 Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SUPA_URL = 'https://jzhbltazfbasfwkjcffr.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp6aGJsdGF6ZmJhc2Z3a2pjZmZyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU3OTYwMDksImV4cCI6MjA5MTM3MjAwOX0.7L7SWN8jLjhRprqDXVvF8F-BhtdfffNuRKNCzSSDtA4';
+const { createClient } = supabase;
+const db = createClient(SUPA_URL, SUPA_KEY);
+
+let currentPlans = [];
+let confirmPayData = null;
+
+// ── UTILS ──
+function showToast(msg, type='info'){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = `toast ${type} show`;
+  setTimeout(()=>t.classList.remove('show'), 3000);
+}
+function closeModal(id){ document.getElementById(id).classList.remove('open'); }
+function openModal(id){ document.getElementById(id).classList.add('open'); }
+function fmtDate(d){ if(!d) return '—'; return new Date(d).toLocaleString('en-BD',{dateStyle:'short',timeStyle:'short'}); }
+function fmtMoney(n){ return '৳' + (n||0).toLocaleString(); }
+
+// ── AUTH ──
+async function doLogin(){
+  const u = document.getElementById('login-user').value.trim();
+  const p = document.getElementById('login-pass').value.trim();
+  const err = document.getElementById('login-err');
+  err.textContent = '';
+  if(!u||!p){ err.textContent='Enter username and password'; return; }
+  const { data } = await db.from('admins').select('*').eq('username',u).eq('password_hash',p).single();
+  if(!data){ err.textContent='Invalid credentials'; return; }
+  localStorage.setItem('loa_admin', JSON.stringify({u,t:Date.now()}));
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('app').style.display='flex';
+  initApp();
+}
+function doLogout(){
+  localStorage.removeItem('loa_admin');
+  document.getElementById('app').style.display='none';
+  document.getElementById('login-screen').style.display='flex';
+}
+function checkAuth(){
+  const d = localStorage.getItem('loa_admin');
+  if(!d) return false;
+  const p = JSON.parse(d);
+  if(Date.now() - p.t > 86400000){ localStorage.removeItem('loa_admin'); return false; }
+  return true;
+}
+
+// ── INIT ──
+function initApp(){
+  setInterval(()=>{ document.getElementById('topbar-time').textContent = new Date().toLocaleString('en-BD'); }, 1000);
+  loadDashboard();
+  loadSettings();
+  subscribePayments();
+}
+
+// ── NAVIGATION ──
+function goPage(name){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  document.querySelector(`[data-page="${name}"]`).classList.add('active');
+  if(name==='payments') loadPayments();
+  if(name==='licenses') loadLicenses();
+  if(name==='customers') loadCustomers();
+}
+
+// ── REALTIME ──
+function subscribePayments(){
+  db.channel('payments').on('postgres_changes',{event:'INSERT',schema:'public',table:'payments'},()=>{
+    loadDashboard(); updatePendingBadge();
+    showToast('🔔 New payment request!','info');
+  }).subscribe();
+}
+
+// ── DASHBOARD ──
+async function loadDashboard(){
+  const today = new Date(); today.setHours(0,0,0,0);
+  const weekAgo = new Date(); weekAgo.setDate(weekAgo.getDate()-7);
+
+  const [pays, lics] = await Promise.all([
+    db.from('payments').select('*').eq('status','confirmed'),
+    db.from('licenses').select('*')
+  ]);
+
+  const allPays = pays.data||[];
+  const allLics = lics.data||[];
+
+  const total = allPays.reduce((s,p)=>s+(p.amount||0),0);
+  const todayRev = allPays.filter(p=>new Date(p.created_at)>=today).reduce((s,p)=>s+(p.amount||0),0);
+  const weekRev = allPays.filter(p=>new Date(p.created_at)>=weekAgo).reduce((s,p)=>s+(p.amount||0),0);
+  const totalCredits = allPays.reduce((s,p)=>s+(p.credits||0),0);
+  const active = allLics.filter(l=>l.status==='active').length;
+
+  const { count } = await db.from('payments').select('*',{count:'exact',head:true}).eq('status','pending');
+
+  document.getElementById('stat-revenue').textContent = fmtMoney(total);
+  document.getElementById('stat-today').textContent = fmtMoney(todayRev);
+  document.getElementById('stat-weekly').textContent = fmtMoney(weekRev);
+  document.getElementById('stat-credits').textContent = totalCredits.toLocaleString();
+  document.getElementById('stat-active').textContent = active;
+  document.getElementById('stat-pending').textContent = count||0;
+
+  updatePendingBadge(count||0);
+  buildRevenueChart(allPays);
+
+  // Recent payments
+  const recent = await db.from('payments').select('*').order('created_at',{ascending:false}).limit(10);
+  const tbody = document.getElementById('recent-payments');
+  tbody.innerHTML = (recent.data||[]).map(p=>`
+    <tr>
+      <td><span style="font-family:var(--mono);font-size:12px">${p.customer_phone||'—'}</span></td>
+      <td>${p.plan_name||p.plan_id||'—'}</td>
+      <td style="font-weight:600;color:var(--green)">${fmtMoney(p.amount)}</td>
+      <td>${p.payment_method||'—'}</td>
+      <td><span class="badge ${p.status}">${p.status}</span></td>
+      <td style="color:var(--text3);font-size:12px">${fmtDate(p.created_at)}</td>
+    </tr>`).join('') || '<tr><td colspan="6" class="loading-row">No payments yet</td></tr>';
+}
+
+function buildRevenueChart(pays){
+  const bars = document.getElementById('rev-chart');
+  const days = [];
+  for(let i=6;i>=0;i--){ const d=new Date(); d.setDate(d.getDate()-i); days.push(d); }
+  const vals = days.map(d=>{
+    const ds = d.toDateString();
+    return pays.filter(p=>new Date(p.created_at).toDateString()===ds).reduce((s,p)=>s+(p.amount||0),0);
+  });
+  const max = Math.max(...vals,1);
+  bars.innerHTML = vals.map((v,i)=>`
+    <div class="rev-bar-wrap">
+      <div class="rev-val">${v?'৳'+v:''}</div>
+      <div class="rev-bar" style="height:${Math.round((v/max)*90)}px"></div>
+      <div class="rev-label">${days[i].toLocaleDateString('en',{weekday:'short'})}</div>
+    </div>`).join('');
+}
+
+function updatePendingBadge(n){
+  const badge = document.getElementById('pending-badge');
+  const dot = document.getElementById('notif-dot');
+  if(n>0){ badge.textContent=n; badge.style.display='inline-flex'; dot.style.display='block'; }
+  else { badge.style.display='none'; dot.style.display='none'; }
+}
+
+// ── PAYMENTS ──
+async function loadPayments(){
+  const filter = document.getElementById('pay-filter').value;
+  let q = db.from('payments').select('*').order('created_at',{ascending:false});
+  if(filter!=='all') q = q.eq('status',filter);
+  const { data } = await q;
+  const tbody = document.getElementById('payments-tbody');
+  tbody.innerHTML = (data||[]).map(p=>`
+    <tr>
+      <td>${p.customer_name||'—'}</td>
+      <td><span style="font-family:var(--mono);font-size:12px">${p.customer_phone}</span></td>
+      <td><strong>${p.plan_name||p.plan_id}</strong></td>
+      <td style="color:var(--green);font-weight:600">${fmtMoney(p.amount)}</td>
+      <td><span style="font-family:var(--mono);font-size:11px;color:var(--text3)">${p.transaction_id}</span></td>
+      <td>${p.payment_method||'bkash'}</td>
+      <td><span class="badge ${p.status}">${p.status}</span></td>
+      <td style="font-size:12px;color:var(--text3)">${fmtDate(p.created_at)}</td>
+      <td>
+        ${p.status==='pending'?`
+          <button class="btn btn-green btn-sm" onclick="openConfirmPay('${p.id}')">✅ Confirm</button>
+          <button class="btn btn-red btn-sm" onclick="rejectPay('${p.id}')">✗ Reject</button>
+        `:`<span style="color:var(--text3);font-size:12px">${p.license_key||'—'}</span>`}
+      </td>
+    </tr>`).join('') || '<tr><td colspan="9" style="text-align:center;padding:30px;color:var(--text3)">No payments</td></tr>';
+}
+
+async function openConfirmPay(id){
+  const { data:p } = await db.from('payments').select('*').eq('id',id).single();
+  if(!p) return;
+  confirmPayData = p;
+  const key = generateKey();
+  document.getElementById('confirm-key-display').textContent = key;
+  confirmPayData._key = key;
+  document.getElementById('confirm-pay-details').innerHTML = `
+    <div style="background:var(--bg3);border-radius:8px;padding:14px;margin-bottom:12px;font-size:13px;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+        <div><span style="color:var(--text2)">Phone:</span> <strong>${p.customer_phone}</strong></div>
+        <div><span style="color:var(--text2)">Plan:</span> <strong>${p.plan_name||p.plan_id}</strong></div>
+        <div><span style="color:var(--text2)">Amount:</span> <strong style="color:var(--green)">${fmtMoney(p.amount)}</strong></div>
+        <div><span style="color:var(--text2)">TxID:</span> <span style="font-family:var(--mono);font-size:11px">${p.transaction_id}</span></div>
+        <div><span style="color:var(--text2)">Credits:</span> <strong>${(p.credits||0).toLocaleString()}</strong></div>
+        <div><span style="color:var(--text2)">Method:</span> ${p.payment_method}</div>
+      </div>
+    </div>`;
+  const wa = `https://wa.me/88${p.customer_phone}?text=${encodeURIComponent(`আপনার LeadOutfy Ai Pro License Key:\n\n🔑 ${key}\n\nExtension এর Account tab এ গিয়ে Activate করুন।\n\nPlan: ${p.plan_name||p.plan_id}\nCredits: ${p.credits||0}\n\nধন্যবাদ! 🙏`)}`;
+  document.getElementById('whatsapp-link').innerHTML = `<a href="${wa}" target="_blank" class="btn btn-green" style="text-decoration:none;">📱 WhatsApp এ Key পাঠান</a>`;
+  document.getElementById('confirm-pay-btn').onclick = ()=>confirmPay();
+  openModal('modal-confirm-pay');
+}
+
+async function confirmPay(){
+  const p = confirmPayData;
+  if(!p) return;
+  const credits = p.credits || getPlanCredits(p.plan_id);
+  await db.from('licenses').insert({
+    license_key: p._key,
+    customer_name: p.customer_name,
+    customer_phone: p.customer_phone,
+    plan_id: p.plan_id,
+    credits_total: credits,
+    credits_used: 0,
+    credits_remaining: credits,
+    status: 'active'
+  });
+  await db.from('payments').update({ status:'confirmed', license_key: p._key, confirmed_at: new Date().toISOString() }).eq('id', p.id);
+  closeModal('modal-confirm-pay');
+  showToast('✅ Payment confirmed! License activated.','success');
+  loadPayments(); loadDashboard();
+}
+
+async function rejectPay(id){
+  if(!confirm('Reject this payment?')) return;
+  await db.from('payments').update({ status:'rejected' }).eq('id',id);
+  showToast('Payment rejected','error');
+  loadPayments();
+}
+
+// ── LICENSES ──
+async function loadLicenses(){
+  const { data } = await db.from('licenses').select('*').order('created_at',{ascending:false});
+  const tbody = document.getElementById('licenses-tbody');
+  tbody.innerHTML = (data||[]).map(l=>`
+    <tr>
+      <td><span style="font-family:var(--mono);font-size:12px;color:var(--accent3)">${l.license_key}</span></td>
+      <td>${l.customer_name||'—'}</td>
+      <td>${l.customer_phone||'—'}</td>
+      <td>${l.plan_id||'—'}</td>
+      <td>
+        <div style="font-family:var(--mono);font-size:13px">${l.credits_remaining||0} / ${l.credits_total||0}</div>
+        <div class="credit-bar"><div class="credit-fill" style="width:${l.credits_total?Math.round((l.credits_remaining/l.credits_total)*100):0}%"></div></div>
+      </td>
+      <td><span class="badge ${l.status}">${l.status}</span></td>
+      <td style="font-size:12px;color:var(--text3)">${fmtDate(l.created_at)}</td>
+      <td>
+        <button class="btn btn-outline btn-sm" onclick="openEditLicense('${l.id}')">✏️</button>
+        <button class="btn btn-red btn-sm" onclick="deleteLicense('${l.id}')">🗑</button>
+      </td>
+    </tr>`).join('') || '<tr><td colspan="8" style="text-align:center;padding:30px;color:var(--text3)">No licenses</td></tr>';
+}
+
+function openAddLicense(){
+  generateKeyPreview();
+  openModal('modal-add-license');
+}
+
+function generateKeyPreview(){
+  const k = generateKey();
+  document.getElementById('al-key-preview').textContent = k;
+  document.getElementById('al-key-preview').dataset.key = k;
+}
+
+async function saveLicense(){
+  const key = document.getElementById('al-key-preview').dataset.key || generateKey();
+  const name = document.getElementById('al-name').value.trim();
+  const phone = document.getElementById('al-phone').value.trim();
+  const plan = document.getElementById('al-plan').value;
+  const customCredits = parseInt(document.getElementById('al-credits').value)||0;
+  const notes = document.getElementById('al-notes').value.trim();
+  const credits = customCredits || getPlanCredits(plan);
+  await db.from('licenses').insert({
+    license_key: key, customer_name: name, customer_phone: phone,
+    plan_id: plan, credits_total: credits, credits_used: 0,
+    credits_remaining: credits, status: 'active', notes
+  });
+  closeModal('modal-add-license');
+  showToast('✅ License created!','success');
+  loadLicenses();
+}
+
+async function openEditLicense(id){
+  const { data:l } = await db.from('licenses').select('*').eq('id',id).single();
+  if(!l) return;
+  document.getElementById('el-id').value = l.id;
+  document.getElementById('el-name').value = l.customer_name||'';
+  document.getElementById('el-phone').value = l.customer_phone||'';
+  document.getElementById('el-status').value = l.status;
+  document.getElementById('el-credits').value = l.credits_remaining;
+  openModal('modal-edit-license');
+}
+
+async function updateLicense(){
+  const id = document.getElementById('el-id').value;
+  await db.from('licenses').update({
+    customer_name: document.getElementById('el-name').value,
+    customer_phone: document.getElementById('el-phone').value,
+    status: document.getElementById('el-status').value,
+    credits_remaining: parseInt(document.getElementById('el-credits').value)||0
+  }).eq('id',id);
+  closeModal('modal-edit-license');
+  showToast('✅ License updated!','success');
+  loadLicenses(); loadCustomers();
+}
+
+async function deleteLicense(id){
+  if(!confirm('Delete this license? Customer will lose access!')) return;
+  await db.from('licenses').delete().eq('id',id);
+  showToast('License deleted','error');
+  loadLicenses();
+}
+
+// ── CUSTOMERS ──
+async function loadCustomers(){
+  const { data } = await db.from('licenses').select('*').order('created_at',{ascending:false});
+  const all = data||[];
+  document.getElementById('cust-active').textContent = all.filter(l=>l.status==='active').length;
+  document.getElementById('cust-blocked').textContent = all.filter(l=>l.status==='blocked').length;
+  document.getElementById('cust-total').textContent = all.length;
+  const tbody = document.getElementById('customers-tbody');
+  tbody.innerHTML = all.map(l=>`
+    <tr>
+      <td><span style="font-family:var(--mono);font-size:11px;color:var(--accent3)">${l.license_key}</span></td>
+      <td>${l.customer_name||'—'}</td>
+      <td>${l.customer_phone||'—'}</td>
+      <td>${l.plan_id||'—'}</td>
+      <td><strong style="font-family:var(--mono)">${l.credits_remaining||0}</strong><span style="color:var(--text3)"> / ${l.credits_total||0}</span></td>
+      <td>
+        <div class="credit-bar" style="width:80px">
+          <div class="credit-fill" style="width:${l.credits_total?Math.round(((l.credits_total-l.credits_remaining)/l.credits_total)*100):0}%"></div>
+        </div>
+        <span style="font-size:11px;color:var(--text3)">${l.credits_used||0} used</span>
+      </td>
+      <td><span class="badge ${l.status}">${l.status}</span></td>
+      <td>
+        ${l.status==='active'
+          ? `<button class="btn btn-red btn-sm" onclick="blockLicense('${l.id}')">🚫 Block</button>`
+          : `<button class="btn btn-green btn-sm" onclick="unblockLicense('${l.id}')">✅ Unblock</button>`}
+      </td>
+    </tr>`).join('') || '<tr><td colspan="8" style="text-align:center;padding:30px;color:var(--text3)">No customers</td></tr>';
+}
+
+async function blockLicense(id){
+  await db.from('licenses').update({status:'blocked'}).eq('id',id);
+  showToast('License blocked','error'); loadCustomers();
+}
+async function unblockLicense(id){
+  await db.from('licenses').update({status:'active'}).eq('id',id);
+  showToast('✅ License unblocked','success'); loadCustomers();
+}
+
+// ── SETTINGS ──
+async function loadSettings(){
+  const { data } = await db.from('settings').select('*').eq('id','global').single();
+  if(!data) return;
+  document.getElementById('s-bkash').value = data.bkash_number||'';
+  document.getElementById('s-nagad').value = data.nagad_number||'';
+  document.getElementById('s-rocket').value = data.rocket_number||'';
+  document.getElementById('s-bank').value = data.bank_details||'';
+  currentPlans = data.plans||[];
+  buildPlanEditor(currentPlans);
+}
+
+function buildPlanEditor(plans){
+  const el = document.getElementById('plan-editor');
+  el.innerHTML = plans.map((p,i)=>`
+    <div class="plan-card-edit">
+      <h4>${['STARTER','GROWTH','PRO','BUSINESS'][i]||p.name}</h4>
+      <label>Credits</label><input value="${p.credits}" onchange="currentPlans[${i}].credits=parseInt(this.value)||0" placeholder="Credits"/>
+      <label>Price (৳)</label><input value="${p.price}" onchange="currentPlans[${i}].price=parseInt(this.value)||0" placeholder="Price"/>
+      <label>Badge (optional)</label><input value="${p.badge||''}" onchange="currentPlans[${i}].badge=this.value||null" placeholder="e.g. POPULAR"/>
+    </div>`).join('');
+}
+
+async function savePaymentSettings(){
+  await db.from('settings').update({
+    bkash_number: document.getElementById('s-bkash').value,
+    nagad_number: document.getElementById('s-nagad').value,
+    rocket_number: document.getElementById('s-rocket').value,
+    bank_details: document.getElementById('s-bank').value,
+    updated_at: new Date().toISOString()
+  }).eq('id','global');
+  showToast('✅ Payment settings saved!','success');
+}
+
+async function savePlans(){
+  // recalc per_credit and save
+  const updated = currentPlans.map(p=>({...p, per_credit: p.credits>0?(p.price/p.credits).toFixed(2):'0'}));
+  await db.from('settings').update({ plans: updated, updated_at: new Date().toISOString() }).eq('id','global');
+  showToast('✅ Plans saved! Extension will update automatically.','success');
+}
+
+async function addCredits(){
+  const key = document.getElementById('ac-key').value.trim();
+  const add = parseInt(document.getElementById('ac-credits').value)||0;
+  if(!key||!add){ showToast('Enter key and amount','error'); return; }
+  const { data:l } = await db.from('licenses').select('*').eq('license_key',key).single();
+  if(!l){ showToast('License not found','error'); return; }
+  await db.from('licenses').update({
+    credits_remaining: l.credits_remaining + add,
+    credits_total: l.credits_total + add
+  }).eq('license_key',key);
+  showToast(`✅ ${add} credits added to ${key}`,'success');
+}
+
+async function changePassword(){
+  const np = document.getElementById('new-pass').value;
+  const cp = document.getElementById('confirm-pass').value;
+  if(!np||np!==cp){ showToast('Passwords do not match','error'); return; }
+  await db.from('admins').update({password_hash:np}).eq('username','admin');
+  showToast('✅ Password changed!','success');
+}
+
+// ── HELPERS ──
+function generateKey(){
+  const c='ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  const seg=()=>Array.from({length:4},()=>c[Math.floor(Math.random()*c.length)]).join('');
+  return `LOA-${seg()}-${seg()}-${seg()}`;
+}
+function getPlanCredits(plan){
+  const map={starter:500,growth:1000,pro:3000,business:10000};
+  return map[plan]||500;
+}
+
+// ── STARTUP ──
+window.addEventListener('keydown',e=>{ if(e.key==='Enter'&&document.getElementById('login-screen').style.display!=='none') doLogin(); });
+if(checkAuth()){
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('app').style.display='flex';
+  initApp();
+}
+</script>
+</body>
+</html>

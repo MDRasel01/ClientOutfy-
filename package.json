@@ -8,8 +8,8 @@
     "node": ">=20.x"
   },
   "scripts": {
-    "build": "echo 'ClientOutfy static and serverless build ready.'",
-    "vercel-build": "echo 'ClientOutfy build ready.'",
-    "start": "npx serve ."
+    "build": "echo 'Static build ready in public/'",
+    "vercel-build": "echo 'Static build ready in public/'",
+    "start": "npx serve public"
   }
 }

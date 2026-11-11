@@ -1,6 +1,5 @@
 {
   "version": 2,
-  "framework": null,
-  "buildCommand": "echo 'Static dashboard ready'",
+  "outputDirectory": "public",
   "cleanUrls": true
 }
